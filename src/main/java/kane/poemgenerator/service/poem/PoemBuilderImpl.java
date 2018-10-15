@@ -28,24 +28,25 @@ public class PoemBuilderImpl implements PoemBuilder {
 
 	public void buildPoem(Rules rules) {
 		try {
-			StringBuilder sb = new StringBuilder();
+			StringBuilder result = new StringBuilder();
 			LinkedHashMap<String, Rule> poemRules = (LinkedHashMap<String, Rule>) rules.getRuleLines();
 			if (!poemRules.isEmpty()) {
 				PoemRule mainRule = (PoemRule) poemRules.get("POEM");
 				ArrayList<String> mainRuleArgs = (ArrayList<String>) mainRule.getKeyArgs();
 				for (String mainRuleArg : mainRuleArgs) {
-					generatePoem((PoemRule) poemRules.get(mainRuleArg.substring(1, mainRuleArg.length() - 1)), poemRules, sb);
+					StringBuilder tempResult = new StringBuilder();
+					String resultLine = generatePoem((PoemRule) poemRules.get(mainRuleArg.substring(1, mainRuleArg.length() - 1)), poemRules, tempResult);
+					result.append(resultLine);
 				}
 			}
-			System.out.println(sb.toString());
-			writeOutput(sb.toString());
+			System.out.println(result.toString());
+			writeOutput(result.toString());
 		} catch (Exception e) {
 			logger.error("Error while generating poem - ", e);
 		}
 	}
 
-	private void generatePoem(PoemRule poemRule, LinkedHashMap<String, Rule> poemRules, StringBuilder sb)
-			throws Exception {
+	private String generatePoem(PoemRule poemRule, LinkedHashMap<String, Rule> poemRules, StringBuilder sb) throws Exception {
 		try {
 			if (!poemRule.getBasicArgs().isEmpty()) {
 				sb.append(poemRule.getBasicArgs().get(randomIndex(0, poemRule.getBasicArgs().size())));
@@ -57,8 +58,13 @@ public class PoemBuilderImpl implements PoemBuilder {
 				generatePoem(subRule, poemRules, sb);
 			} else if (keyArg.matches(KEY_ARG_TYPE_PATTERN_TWO)) {
 				RuleKeys ruleKey = RuleKeys.valueOf(keyArg);
-				sb.append(ruleKey.getValue());
+				if (sb.length() > 0) {
+					sb.append(ruleKey.getValue());
+				} else {
+					generatePoem(poemRule, poemRules, sb);
+				}
 			}
+			return sb.toString();
 		} catch (Exception e) {
 			throw e;
 		}
